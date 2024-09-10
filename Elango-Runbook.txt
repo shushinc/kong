@@ -1,14 +1,70 @@
----
-- name: Upgrade packages on GCP VMs
-  hosts: all
-  become: yes
-  tasks:
-    - name: Run yum upgrade
-      yum:
-        name: "*"
-        state: latest
-      register: yum_output
 
-    - name: Display upgrade result
-      debug:
-        var: yum_output
+"Elango Task List"
+1. Github clone private repo
+2, Make Postgres active-passive
+3. Lee with port  - 443 - external SSL port for kong & Portal
+
+
+install Playbook:
+      ansible-playbook -i hosts install_postgres.yml --limit dbservers
+
+test: 
+      PGPASSWORD=super_secret psql -h 127.0.0.1 -p 5432 -U kong -d kong 
+      PGPASSWORD=super_secret psql -h 10.128.0.30 -p 5432 -U kong -d kong  
+      psql install:  sudo dnf install postgresql-server -y;sudo systemctl restart postgresql-15
+
+
+Kong Installation
+ansible-playbook -i hosts install_kong.yml --limit runtime
+
+
+Kong Utility
+ansible-playbook -i hosts kong_utility.yml --limit runtime --start-at-task="Kong Status"
+ansible-playbook -i hosts kong_utility.yml --limit runtime --tags status
+
+Status:
+ansible-playbook -i kong_utility.yml kong_utility_tool.yml --tags status
+
+
+
+
+
+
+
+
+
+
+
+
+---- GCP
+
+gcloud compute instances describe cts-den1-shapigw2 \
+    --zone=your-instance-zone \
+    --format='get(networkInterfaces[0].accessConfigs[0].natIP)'
+
+Allow External 8001 access:
+gcloud compute firewall-rules create allow-external-8001 \
+    --network=default \
+    --allow=tcp:8001 \
+    --source-ranges=0.0.0.0/0 \
+    --direction=INGRESS \
+    --priority=1000 
+
+
+Allow External 8002 access:
+gcloud compute firewall-rules create allow-external-8002 \
+    --network=default \
+    --allow=tcp:8002 \
+    --source-ranges=0.0.0.0/0 \
+    --direction=INGRESS \
+    --priority=1000 
+
+
+Allow External 8000 access:
+gcloud compute firewall-rules create allow-external-8000 \
+    --network=default \
+    --allow=tcp:8000 \
+    --source-ranges=0.0.0.0/0 \
+    --direction=INGRESS \
+    --priority=1000 
+
