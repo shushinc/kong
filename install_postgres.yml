@@ -1,0 +1,141 @@
+---
+- name: Install PostgreSQL 15 and create user/database for Kong
+  hosts: all
+  become: yes
+  vars:
+    postgres_version: "15"
+    postgres_user: "kong"
+    postgres_password: "super_secret"
+    postgres_db: "kong"
+  pre_tasks:
+    - name: Ensure dnf-plugins-core is installed (for repo management)
+      dnf:
+        name: dnf-plugins-core
+        state: present
+
+    - name: Update all packages
+      dnf:
+        name: "*"
+        state: latest
+        update_cache: yes
+    
+    - name: "Install pip for Python 3"
+      dnf:
+        name: "python3-pip"
+        state: present
+
+    - name: "Install Python packages"
+      pip:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - psycopg2-binary
+
+    - name: Add PostgreSQL GPG key
+      rpm_key:
+        key: "https://download.postgresql.org/pub/repos/yum/keys/PGDG-RPM-GPG-KEY-RHEL"
+        state: present
+
+    - name: "Add PostgreSQL repository"
+      dnf:
+        name: "https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm"
+        state: present
+
+    - name: "Disable PostgreSQL module"
+      command: "dnf -qy module disable postgresql"
+
+    - name: "Install PostgreSQL 15 server"
+      dnf:
+        name: "postgresql{{ postgres_version }}-server"
+        state: present
+
+
+
+  tasks:
+    - name: "Check if PostgreSQL is initialized"
+      stat:
+        path: "/var/lib/pgsql/{{ postgres_version }}/data/pg_hba.conf"
+      register: postgres_data
+
+    - name: "Initialize PostgreSQL database"
+      command: "/usr/pgsql-{{ postgres_version }}/bin/postgresql-{{ postgres_version }}-setup initdb"
+      when: not postgres_data.stat.exists
+
+    - name: "Enable and start PostgreSQL service"
+      systemd:
+        name: "postgresql-{{ postgres_version }}"
+        state: started
+        enabled: yes
+
+    - name: Ensure Ansible tmp directory exists for PostgreSQL user
+      file:
+        path: /var/lib/pgsql/.ansible/tmp
+        state: directory
+        owner: postgres
+        group: postgres
+        mode: '0700'
+      become: true
+
+    - name: Create PostgreSQL user for Kong
+      become_user: postgres
+      postgresql_user:
+        name: "{{ postgres_user }}"
+        password: "{{ postgres_password }}"
+        state: present
+
+    - name: Create PostgreSQL database for Kong
+      become_user: postgres
+      postgresql_db:
+        name: "{{ postgres_db }}"
+        owner: "{{ postgres_user }}"
+        encoding: "UTF8"
+        state: present
+    
+    - name: Update PostgreSQL authentication method for user kong
+      lineinfile:
+        path: /var/lib/pgsql/{{ postgres_version }}/data/pg_hba.conf
+        regexp: '^local\s+all\s+all\s+peer'
+        line: 'local   all   all   md5'
+        backup: yes
+      become: true
+
+    - name: Reload PostgreSQL to apply authentication changes
+      systemd:
+        name: "postgresql-{{ postgres_version }}"
+        state: reloaded
+      become: true
+
+    - name: Allow PostgreSQL to listen on all IP addresses
+      lineinfile:
+        path: /var/lib/pgsql/{{ postgres_version }}/data/postgresql.conf
+        regexp: '^#?listen_addresses'
+        line: "listen_addresses = '*'"
+      become: true
+
+    # - name: Update pg_hba.conf with other hosts' IPs
+    #   lineinfile:
+    #     path: /var/lib/pgsql/{{ postgres_version }}/data/pg_hba.conf
+    #     line: "host    all             all             {{ hostvars[item]['IP'] }}/32    md5"
+    #     create: yes
+    #     with_items: "{{ groups['runtime'] }}"
+    #     when: inventory_hostname != item
+
+    - name: Update pg_hba.conf with runtime hosts' IPs
+      lineinfile:
+        path: /var/lib/pgsql/15/data/pg_hba.conf
+        regexp: '^host'
+        line: "host all all {{ hostvars[item].IP }}/32 md5"
+        state: present
+        create: yes
+      with_items: "{{ groups['runtime'] }}"
+      notify: Restart PostgreSQL
+
+
+  handlers:
+    - name: Restart PostgreSQL
+      systemd:
+        name: "postgresql-{{ postgres_version }}"
+        state: restarted
+      become: true
+
+

@@ -1,0 +1,17 @@
+_format_version: "3.0"
+
+services:
+- name: example-service
+  url: http://example.com
+  # Entities can store tags as metadata
+  tags:
+  - example
+  # Entities that have a foreign-key relationship can be nested:
+  routes:
+  - name: example-route
+    paths:
+    - /
+  plugins:
+  - name: key-auth
+- name: another-service
+  url: https://example.org

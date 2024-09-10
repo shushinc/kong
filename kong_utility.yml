@@ -1,0 +1,34 @@
+---
+- name: Kong Utility Tool
+  hosts: all
+  become: yes
+  tasks:
+    - name: Kong Service
+      become: true
+      become_user: root
+      shell: "curl -i localhost:8001/status"
+      register: kong_status
+      ignore_errors: true
+      tags: 
+        - service
+
+
+    - name: Kong Stop
+      become: true
+      become_user: root
+      shell: "kong stop"
+      when: kong_status.rc == 0
+      tags: 
+        - stop
+    
+    - name: Kong Start
+      become: true
+      become_user: root
+      shell: "kong start -c /etc/kong/kong.conf"
+      tags: 
+        - start
+    
+    - name: Kong Status
+      shell: "curl -i localhost:8001/status"
+      tags: 
+        - status

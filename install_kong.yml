@@ -1,0 +1,109 @@
+---
+- name: Install kong
+  hosts: all
+  become: yes
+  # vars:
+  #   postgres_version: "15"
+  #   postgres_user: "kong"
+  #   postgres_password: "super_secret"
+  #   postgres_db: "kong"
+  pre_tasks:
+    - name: Ensure dnf-plugins-core is installed (for repo management)
+      dnf:
+        name: dnf-plugins-core
+        state: present
+
+    - name: Update all packages
+      dnf:
+        name: "*"
+        state: latest
+        update_cache: yes
+
+  tasks:
+    - name: Add Kong repository
+      shell: |
+        REPO_URL=$(curl -1sLf "https://packages.konghq.com/public/gateway-37/config.rpm.txt?distro=el&codename=$(rpm --eval '%{rhel}')")
+        echo "$REPO_URL" | sudo tee /etc/yum.repos.d/kong-gateway-37.repo
+      args:
+        executable: /bin/bash
+
+    - name: Update YUM cache
+      command: >
+        sudo yum -q makecache -y --disablerepo='*' --enablerepo='kong-gateway-37'
+
+
+    - name: Ensure Kong RPM file is downloaded
+      get_url:
+        url: https://packages.konghq.com/public/gateway-37/rpm/el/9/x86_64/kong-enterprise-edition-3.7.1.2.el9.x86_64.rpm
+        dest: /tmp/kong-enterprise-edition-3.7.1.2.rpm
+
+
+    - name: Install Kong Enterprise Edition
+      yum:
+        name: kong-enterprise-edition
+        state: present
+        enablerepo: kong-gateway-37
+
+    - name: Install Kong Enterprise Edition
+      yum:
+        name: kong-enterprise-edition-3.7.1.2
+        state: present
+
+    - name: Copy kong.conf to /etc/kong
+      copy:
+        src: ./kong.conf
+        dest: /etc/kong/kong.conf
+        owner: root
+        group: root
+        mode: '0644'
+
+    # - name: Check if /etc/kong/kong.conf exists
+    #   stat:
+    #     path: /etc/kong/kong.conf
+    #   register: kong_conf_file
+    #   become: yes
+    #   become_user: root
+
+    - name: Check if /etc/kong/kong.conf exists
+      stat:
+        path: /etc/kong/kong.conf
+      register: kong_conf_file
+
+    - name: Print result of kong.conf existence check
+      debug:
+        msg: "/etc/kong/kong.conf exists: {{ kong_conf_file.stat.isreg }}"
+
+    - name: Fail if /etc/kong/kong.conf does not exist
+      fail:
+        msg: "/etc/kong/kong.conf does not exist!"
+      when: not kong_conf_file.stat.isreg
+
+    # - name: Fail if /etc/kong/kong.conf does not exist
+    #   fail:
+    #     msg: "/etc/kong/kong.conf does not exist!"
+    #   when: not kong_conf_file.exists
+
+    - name: Bootstrap Kong database migrations
+      shell: |
+        kong migrations bootstrap -c /etc/kong/kong.conf
+      environment:
+        PATH: "/usr/local/bin:/usr/bin:/bin"  # Add the path to kong if necessary
+      args:
+        executable: /bin/bash
+      become: yes
+      become_user: root
+    
+    - name: Start Kong service
+      environment:
+          PATH: "/usr/local/bin:/usr/bin:/bin"  # Add the path to kong if necessary
+      args:
+          executable: /bin/bash
+      become: true
+      become_user: root
+      shell: "kong start -c /etc/kong/kong.conf"
+
+
+    # - name: Run Kong migrations bootstrap as root
+    #   command: /usr/local/bin/kong migrations bootstrap -c /etc/kong/kong.conf
+    #   become: yes
+    #   become_user: root

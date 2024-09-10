@@ -1,0 +1,14 @@
+---
+- name: Upgrade packages on GCP VMs
+  hosts: all
+  become: yes
+  tasks:
+    - name: Run yum upgrade
+      yum:
+        name: "*"
+        state: latest
+      register: yum_output
+
+    - name: Display upgrade result
+      debug:
+        var: yum_output

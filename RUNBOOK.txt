@@ -1,0 +1,92 @@
+PreRquest:
+user with  access to server with sudo priveliage all servers
+All  5VM assocaited with carrier has hardware load balancer 
+
+
+Steps:
+1. SSH into one of the API Gateway VMs
+2. run "git clone https://github.com/shushinc/kong.git"
+3. "cd kong"
+4. open "hosts" file, update hostname and IP as per pervider-  ex: cts-den1-shapigw1 IP=10.128.0.30
+5. Install postgres by running : "ansible-playbook -i hosts install_postgres.yml --limit dbservers"
+6. Install Kong by running : "ansible-playbook -i hosts install_kong.yml --limit runtime"
+6. Verify Kong by runnig  : "ansible-playbook -i hosts kong_utility.yml --limit runtime --start-at-task="Kong Status" "
+      Example:
+            Sucess Installation show below output:
+                  "Final Kong status output: HTTP/1.1 200 OK"
+7. Provisioning the proxy: " kong config kong.yml"  - Elango
+8. Provisioning the test API Keys & copy the api key for next step: "curl <kong admin api>"      - Elango
+9. make this curl call from inside  current vm  "curl -i http://{internal-ip}:8000/silent-authentication/v0/retrieve-ip-address"  - Elango
+10. make this curl call from external machine(ex: laptop) "curl -i https://{external-ip}:8443/silent-authentication/v0/retrieve-ip-address"  - Elango
+
+
+
+"Elango Task List"
+1. Github clone private repo
+2, Make Postgres active-passive
+3. Lee with port  - 443 - external SSL port for kong & Portal
+
+
+install Playbook:
+      ansible-playbook -i hosts install_postgres.yml --limit dbservers
+
+test: 
+      PGPASSWORD=super_secret psql -h 127.0.0.1 -p 5432 -U kong -d kong 
+      PGPASSWORD=super_secret psql -h 10.128.0.30 -p 5432 -U kong -d kong  
+      psql install:  sudo dnf install postgresql-server -y;sudo systemctl restart postgresql-15
+
+
+Kong Installation
+ansible-playbook -i hosts install_kong.yml --limit runtime
+
+
+Kong Utility
+ansible-playbook -i hosts kong_utility.yml --limit runtime --start-at-task="Kong Status"
+ansible-playbook -i hosts kong_utility.yml --limit runtime --tags status
+
+Status:
+ansible-playbook -i kong_utility.yml kong_utility_tool.yml --tags status
+
+
+
+
+
+
+
+
+
+
+
+
+---- GCP
+
+gcloud compute instances describe cts-den1-shapigw2 \
+    --zone=your-instance-zone \
+    --format='get(networkInterfaces[0].accessConfigs[0].natIP)'
+
+Allow External 8001 access:
+gcloud compute firewall-rules create allow-external-8001 \
+    --network=default \
+    --allow=tcp:8001 \
+    --source-ranges=0.0.0.0/0 \
+    --direction=INGRESS \
+    --priority=1000 
+
+
+Allow External 8002 access:
+gcloud compute firewall-rules create allow-external-8002 \
+    --network=default \
+    --allow=tcp:8002 \
+    --source-ranges=0.0.0.0/0 \
+    --direction=INGRESS \
+    --priority=1000 
+
+
+Allow External 8000 access:
+gcloud compute firewall-rules create allow-external-8000 \
+    --network=default \
+    --allow=tcp:8000 \
+    --source-ranges=0.0.0.0/0 \
+    --direction=INGRESS \
+    --priority=1000 
+

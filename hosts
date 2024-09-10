@@ -1,0 +1,16 @@
+#VM for the PostgresDB
+[dbservers]
+cts-den1-shapigw1 IP=10.128.0.30
+cts-den1-shapigw2 IP=10.128.0.22
+
+#VMs for the API Gateway   
+[runtime]
+cts-den1-shapigw1 IP=10.128.0.30
+cts-den1-shapigw2 IP=10.128.0.22
+cts-den1-shapigw2 IP=10.128.0.22
+cts-den1-shapigw3 IP=10.128.0.27
+cts-den1-shapigw4 IP=10.128.0.31
+cts-den1-shapigw5 IP=10.128.0.26
+
+
+ansible-server IP=10.128.0.23
