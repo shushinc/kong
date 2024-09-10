@@ -2,7 +2,7 @@ _format_version: "3.0"
 
 services:
 - name: example-service
-  url: http://example.com
+  url: https://httpbin.org
   # Entities can store tags as metadata
   tags:
   - example
@@ -14,4 +14,4 @@ services:
   plugins:
   - name: key-auth
 - name: another-service
-  url: https://example.org
+  url: https://httpbin.org
