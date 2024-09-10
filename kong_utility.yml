@@ -12,23 +12,56 @@
       tags: 
         - service
 
+    - name: Debug Kong Service Output
+      debug:
+        msg: "Kong service status output: {{ kong_status.stdout | default('No output') }}"
+      when: kong_status is defined
+      tags: 
+        - service
 
     - name: Kong Stop
       become: true
       become_user: root
       shell: "kong stop"
       when: kong_status.rc == 0
+      register: kong_stop
+      ignore_errors: true
       tags: 
         - stop
-    
+
+    - name: Debug Kong Stop Output
+      debug:
+        msg: "Kong stop command output: {{ kong_stop.stdout | default('No output') }}"
+      when: kong_stop is defined
+      tags: 
+        - stop
+
     - name: Kong Start
       become: true
       become_user: root
       shell: "kong start -c /etc/kong/kong.conf"
+      register: kong_start
+      ignore_errors: true
       tags: 
         - start
-    
+
+    - name: Debug Kong Start Output
+      debug:
+        msg: "Kong start command output: {{ kong_start.stdout | default('No output') }}"
+      when: kong_start is defined
+      tags: 
+        - start
+
     - name: Kong Status
       shell: "curl -i localhost:8001/status"
+      register: kong_final_status
+      ignore_errors: true
+      tags: 
+        - status
+
+    - name: Debug Kong Status Output
+      debug:
+        msg: "Final Kong status output: {{ kong_final_status.stdout | default('No output') }}"
+      when: kong_final_status is defined
       tags: 
         - status
