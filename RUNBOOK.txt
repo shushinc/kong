@@ -4,7 +4,7 @@ All  5VM assocaited with carrier has hardware load balancer
 
 
 Steps:
-1. SSH into "ansible-server" via Google Cloud Console
+1. SSH into "lee-ansible-server" via Google Cloud Console
 2. run "git clone https://github.com/shushinc/kong.git"
 3. "cd kong"
 4. open "hosts" file, update hostname and IP as per pervider-  ex: cts-den1-shapigw1 IP=10.128.0.30
