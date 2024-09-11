@@ -9,7 +9,7 @@ Steps:
 3. "cd kong"
 4. open "hosts" file, update hostname and IP as per pervider-  ex: cts-den1-shapigw1 IP=10.128.0.30
 5. Install postgres by running : "ansible-playbook -i hosts install_postgres.yml --limit dbservers"
-6. update "pg_host" with one of the postgresIP in  install_postgres.yml file (Line # 1253)
+6. update "pg_host" with one of the postgresIP in  kong.conf  file (Line # 1353)
 7. Install Kong by running : "ansible-playbook -i hosts install_kong.yml --limit runtime"
 8. Verify Kong by runnig  : "ansible-playbook -i hosts kong_utility.yml --limit runtime --start-at-task="Kong Status" "
       Example:
