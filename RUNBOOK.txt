@@ -15,6 +15,7 @@ Steps:
       Example:
             Sucess Installation show below output:
                   "Final Kong status output: HTTP/1.1 200 OK"
+9. open the URL in the Brower "http://{}:8002/workspaces"
 9. Provisioning the proxy: " kong config kong.yml"  - Elango
 10. Provisioning the test API Keys & copy the api key for next step: "curl <kong admin api>"      - Elango
 11. make this curl call from inside  current vm  "curl -i http://{internal-ip}:8000/silent-authentication/v0/retrieve-ip-address"  - Elango
