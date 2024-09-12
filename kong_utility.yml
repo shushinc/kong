@@ -79,11 +79,11 @@
       register: kong_health
       ignore_errors: true
       tags: 
-        - Status
+        - status
 
     - name: Debug Kong health Output
       debug:
         msg: "Kong health command output: {{ kong_health.stdout | default('No output') }}"
       when: kong_health is defined
       tags: 
-        - Status
+        - status
