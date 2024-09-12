@@ -112,22 +112,14 @@
         line: "listen_addresses = '*'"
       become: true
 
-    # - name: Update pg_hba.conf with other hosts' IPs
-    #   lineinfile:
-    #     path: /var/lib/pgsql/{{ postgres_version }}/data/pg_hba.conf
-    #     line: "host    all             all             {{ hostvars[item]['IP'] }}/32    md5"
-    #     create: yes
-    #     with_items: "{{ groups['runtime'] }}"
-    #     when: inventory_hostname != item
-
     - name: Update pg_hba.conf with runtime hosts' IPs
-      lineinfile:
+      blockinfile:
         path: /var/lib/pgsql/15/data/pg_hba.conf
-        regexp: '^host'
-        line: "host all all {{ hostvars[item].IP }}/32 md5"
+        block: |
+          {% for item in groups['runtime'] %}
+          host all all {{ hostvars[item].IP }}/32 md5
+          {% endfor %}
         state: present
-        create: yes
-      with_items: "{{ groups['runtime'] }}"
       notify: Restart PostgreSQL
 
 
