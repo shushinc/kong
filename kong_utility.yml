@@ -3,65 +3,87 @@
   hosts: all
   become: yes
   tasks:
-    - name: Kong Service
-      become: true
+    - name: Kong stop
+      shell: |
+        kong stop 
+      environment:
+        PATH: "/usr/local/bin:/usr/bin:/bin"  # Add the path to kong if necessary
+      args:
+        executable: /bin/bash
+      become: yes
       become_user: root
-      shell: "curl -i localhost:8001/status"
-      register: kong_status
-      ignore_errors: true
-      tags: 
-        - service
-
-    - name: Debug Kong Service Output
-      debug:
-        msg: "Kong service status output: {{ kong_status.stdout | default('No output') }}"
-      when: kong_status is defined
-      tags: 
-        - service
-
-    - name: Kong Stop
-      become: true
-      become_user: root
-      shell: "kong stop"
-      when: kong_status.rc == 0
       register: kong_stop
       ignore_errors: true
       tags: 
         - stop
 
-    - name: Debug Kong Stop Output
+    - name: Debug Kong stop Output
       debug:
         msg: "Kong stop command output: {{ kong_stop.stdout | default('No output') }}"
       when: kong_stop is defined
       tags: 
         - stop
 
-    - name: Kong Start
-      become: true
+    - name: Kong start
+      shell: |
+        kong start -c /etc/kong/kong.conf
+      environment:
+        PATH: "/usr/local/bin:/usr/bin:/bin"  # Add the path to kong if necessary
+      args:
+        executable: /bin/bash
+      become: yes
       become_user: root
-      shell: "kong start -c /etc/kong/kong.conf"
       register: kong_start
       ignore_errors: true
       tags: 
         - start
 
-    - name: Debug Kong Start Output
+    - name: Debug Kong restart Output
       debug:
         msg: "Kong start command output: {{ kong_start.stdout | default('No output') }}"
       when: kong_start is defined
       tags: 
         - start
 
-    - name: Kong Status
-      shell: "curl -i localhost:8001/status"
-      register: kong_final_status
+    
+    - name: Kong restart
+      shell: |
+        kong restart -c /etc/kong/kong.conf
+      environment:
+        PATH: "/usr/local/bin:/usr/bin:/bin"  # Add the path to kong if necessary
+      args:
+        executable: /bin/bash
+      become: yes
+      become_user: root
+      register: kong_restart
       ignore_errors: true
       tags: 
-        - status
+        - restart
 
-    - name: Debug Kong Status Output
+    - name: Debug Kong restart Output
       debug:
-        msg: "Final Kong status output: {{ kong_final_status.stdout | default('No output') }}"
-      when: kong_final_status is defined
+        msg: "Kong restart command output: {{ kong_restart.stdout | default('No output') }}"
+      when: kong_restart is defined
       tags: 
-        - status
+        - restart
+    
+    - name: Kong Status
+      shell: |
+        kong health 
+      environment:
+        PATH: "/usr/local/bin:/usr/bin:/bin"  # Add the path to kong if necessary
+      args:
+        executable: /bin/bash
+      become: yes
+      become_user: root
+      register: kong_health
+      ignore_errors: true
+      tags: 
+        - Status
+
+    - name: Debug Kong health Output
+      debug:
+        msg: "Kong health command output: {{ kong_health.stdout | default('No output') }}"
+      when: kong_health is defined
+      tags: 
+        - Status

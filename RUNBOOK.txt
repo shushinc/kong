@@ -17,3 +17,15 @@ Steps:
                   "Final Kong status output: HTTP/1.1 200 OK"
 
 
+Kong Utility Tool:
+
+Check Kong Health:
+      ansible-playbook -i hosts kong_utility.yml --limit runtime --tags health
+Kong Start:
+      ansible-playbook -i hosts kong_utility.yml --limit runtime --tags start
+Kong Stop:
+      ansible-playbook -i hosts kong_utility.yml --limit runtime --tags stop
+Kong Restart:
+      ansible-playbook -i hosts kong_utility.yml --limit runtime --tags restart
+
+
