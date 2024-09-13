@@ -77,7 +77,6 @@
       become: true
 
     - name: Create PostgreSQL user for Kong
-      become: yes
       become_user: postgres
       postgresql_user:
         name: "{{ postgres_user }}"
