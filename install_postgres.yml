@@ -84,7 +84,6 @@
         state: present
 
     - name: Create PostgreSQL database for Kong
-      become: yes
       become_user: postgres
       postgresql_db:
         name: "{{ postgres_db }}"
