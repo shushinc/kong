@@ -1,0 +1,22 @@
+-- transform.lua
+return function(status, body, headers)
+  -- Check if the Authorization header is missing
+      if body.error == "invalid_token" then
+        local new_body = {
+          status = 401,
+          code = "UNAUTHENTICATED",
+          message = "Invalid Access Token",
+        }
+        return status, new_body, headers
+      end
+    if not headers["authorization"] then
+      local new_body = {
+        status = 401,
+        code = "UNAUTHENTICATED",
+        message = "No Authorization Header present",
+      }
+      return 401, new_body, headers
+    end
+  -- Return the original status, body, and headers if no changes are made
+  return status, body, headers
+endexit-transformer
