@@ -1,0 +1,4 @@
+1. move aggregrate.sh /etc/kong/aggregrate.sh
+2. cronjob:
+   */15 * * * * /etc/kong/api_requests.sh >> /etc/kong/api_requests.log 2>&1
+   0 * * * * /usr/bin/python3 /home/gabrielv/aggregates-v6.py >> /home/gabrielv/aggregates.log 2>&1
