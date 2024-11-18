@@ -2,3 +2,7 @@
 2. cronjob:
    */15 * * * * /etc/kong/api_requests.sh >> /etc/kong/api_requests.log 2>&1
    0 * * * * /usr/bin/python3 /home/gabrielv/aggregates-v6.py >> /home/gabrielv/aggregates.log 2>&1
+
+
+BIG QUERY:
+created table : bq mk --table --schema=./aggregates/patch.json  sherlock-004:test_aggregates.kong_aggregate
