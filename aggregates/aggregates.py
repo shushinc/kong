@@ -28,17 +28,25 @@ def aggregate_values(parsed_data, aggregates):
     carrier_name = parsed_data.get('Carrier Name', 'Unknown')
     method = parsed_data.get('Method', 'Unknown')
     status = parsed_data.get('Status')
+    # latency = float(parsed_data.get('Latency', '0'))  # Default to 0 if latency is missing
 
+    # Parse and clean the latency field
+    latency_value = parsed_data.get('Latency', '0').replace('ms', '').strip()
+    latency = float(latency_value) if latency_value else 0  # Default to 0 if latency is missing or invalid
+    
     # Calculate the hourly key
     timestamp_str = parsed_data.get('Timestamp', '')
     hourly_key = calculate_hourly_key(timestamp_str) if timestamp_str else None
 
     # Create a unique key for aggregation
-    key = (hourly_key, customer_name, client, carrier_name, attribute)
+    key = (hourly_key, customer_name, client, carrier_name, attribute, method)
     
     # Initialize the counts if the key doesn't exist
     if key not in aggregates:
-        aggregates[key] = {'200': 0, '404': 0, 'other': 0}
+        aggregates[key] = {
+            '200': 0, '404': 0, 'other': 0,
+            'latency_sum': 0, 'request_count': 0
+        }
     
     # Increment the appropriate count based on status
     if status == '200':
@@ -48,22 +56,71 @@ def aggregate_values(parsed_data, aggregates):
     else:
         aggregates[key]['other'] += 1
 
-# Function to push results to BigQuery
-def push_to_bigquery(aggregates, client):
-    table_ref = f"{client.project}.test_aggregates.kong"
-    rows_to_insert = []
-    for (hourly_key, customer_name, client_name, carrier_name, attribute), counts in aggregates.items():
-        rows_to_insert.append({
-            "datatime": hourly_key,
-            "Customer Name": customer_name,
-            "Client": client_name,
-            "Carrier Name": carrier_name,
-            "Attributes": attribute,
-            "Total full_rate_billable_transaction": counts['200'],
-            "Total lower_rate_billable_transaction": counts['404'],
-            "Total no_billable_transaction": counts['other']
-        })
+    # Update latency and request count
+    aggregates[key]['latency_sum'] += latency
+    aggregates[key]['request_count'] += 1
 
+def push_to_bigquery(aggregates, client):
+    table_ref = f"{client.project}.test_aggregates.kong_aggregate"
+    rows_to_insert = []
+
+    for (hourly_key, customer_name, client_name, carrier_name, attribute, method), counts in aggregates.items():
+        # Calculate average latency
+        avg_latency = (
+            counts['latency_sum'] / counts['request_count']
+            if counts['request_count'] > 0 else 0
+        )
+        
+        # Add rows for each transaction type
+        if counts['200'] > 0:
+            rows_to_insert.append({
+                "datatime": hourly_key,
+                "carrier_name": customer_name,
+                "client": client_name,
+                "customer_name": carrier_name,
+                "attributes": attribute,
+                # "Method": method,
+                "transaction_type": "Successful",
+                "transaction_type_count": counts['200'],
+                "total_full_rate_billable_transaction": counts['200'],
+                "total_lower_rate_billable_transaction": counts['404'],
+                "total_no_billable_transaction": counts['other'],
+                "avg_latency": avg_latency
+            })
+            
+
+        if counts['404'] > 0:
+            rows_to_insert.append({
+                "datatime": hourly_key,
+                "customer_name": carrier_name,
+                "client": client_name,
+                "carrier_name": customer_name,
+                "attributes": attribute,
+                #"Method": method,
+                "transaction_type": "Unsuccessful Transactions",
+                "transaction_type_count": counts['404'],
+                "total_full_rate_billable_transaction": counts['200'],
+                "total_lower_rate_billable_transaction": counts['404'],
+                "total_no_billable_transaction": counts['other'],
+                "avg_latency": avg_latency
+            })
+
+        if counts['other'] > 0:
+            rows_to_insert.append({
+                "datatime": hourly_key,
+                "customer_name": carrier_name,
+                "client": client_name,
+                "carrier_name": customer_name,
+               "attributes": attribute,
+                "transaction_type": "User not Supported",
+                "transaction_type_count": counts['other'],
+                "total_full_rate_billable_transaction": counts['200'],
+                "total_lower_rate_billable_transaction": counts['404'],
+                "total_no_billable_transaction": counts['other'],
+                "avg_latency": avg_latency
+            })
+
+    # Insert rows into BigQuery
     errors = client.insert_rows_json(table_ref, rows_to_insert)
     if errors:
         print(f"Errors occurred while inserting rows: {errors}")

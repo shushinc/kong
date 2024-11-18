@@ -1,0 +1,57 @@
+[
+    {
+        "name": "datatime",
+        "type": "DATETIME",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "carrier_name",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "client",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "customer_name",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "attributes",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "total_full_rate_billable_transaction",
+        "type": "INT64",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "total_lower_rate_billable_transaction",
+        "type": "INT64",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "total_no_billable_transaction",
+        "type": "INT64",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "avg_latency",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "transaction_type",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "transaction_type_count",
+        "type": "INT64",
+        "mode": "NULLABLE"
+    }
+]
