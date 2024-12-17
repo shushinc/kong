@@ -1,12 +1,12 @@
 #VM for the PostgresDB
 [dbservers]
-cts-den1-shapigw1 IP=10.172.80.168
-cts-den1-shapigw2 IP=10.172.80.169
+shushapigw-per1 IP=10.51.3.19
+shushapigw-per2 IP=10.51.3.20
 
 #VMs for the API Gateway   
 [runtime]
-cts-den1-shapigw1 IP=10.172.80.168
-cts-den1-shapigw2 IP=10.172.80.169
-cts-den1-shapigw3 IP=10.172.80.170
-cts-den1-shapigw4 IP=10.172.80.171
-cts-den1-shapigw5 IP=10.172.80.172
+shushapigw-per1 IP=10.51.3.19
+shushapigw-per2 IP=10.51.3.20
+shushapigw-per3 IP=10.51.3.21
+shushapigw-per4 IP=10.51.3.22
+shushapigw-per5 IP=10.51.3.23
